@@ -1,7 +1,8 @@
 const collegeModel = require('../models/collegeModel')
 const internModel = require('../models/internModel')
 const validator = require('../utils/validator')
-const validurl = require('valid-url')
+const axios=require('axios')
+const { response } = require("express");
 
 const createCollege = async function (req, res) {
   try {
@@ -13,12 +14,26 @@ const createCollege = async function (req, res) {
     if (!name || !fullName || !logoLink) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    if (!validurl.isWebUri(logoLink)) {
-      return res.status(400).json({ status: false, message: "enater a valid link" })
+
+    const existingCollege = await collegeModel.findOne({logoLink});
+    if (existingCollege) {
+      return res.status(409).json({ status: false, message: "College already exists" });
     }
-    const savedCollege = await collegeModel.create(collegeDetail)
-    const { __v, _id, ...restCollege } = savedCollege._doc
-    res.status(201).send({ status: true, data: restCollege })
+       // Use axios.get() to fetch the URL and handle the response
+       const response= axios.get(logoLink)
+       .then(async(response) => {
+         // Check the response status code
+         if (response.status === 200) {
+           const savedCollege = await collegeModel.create(collegeDetail);
+           const { __v, _id, ...restCollege } = savedCollege._doc;
+           res.status(201).send({ status: true, data: restCollege });
+         } else {
+           res.status(400).json({ status: false, message: "Enter a valid link" });
+         }
+       })
+       .catch(error => {
+         res.status(400).json({ status: false, message: "Enter a valid link" });
+       });
   } catch (error) {
     console.log(error)
     res.status(500).send({ status: false, error: error.message })
