@@ -17,7 +17,7 @@ const createCollege = async function (req, res) {
 
     const existingCollege = await collegeModel.findOne({logoLink});
     if (existingCollege) {
-      return res.status(409).json({ status: false, message: "College already exists" });
+      return res.status(400).json({ status: false, message: "College already exists" });
     }
        // Use axios.get() to fetch the URL and handle the response
        const response= axios.get(logoLink)
